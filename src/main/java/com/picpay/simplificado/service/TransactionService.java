@@ -1,6 +1,7 @@
 package com.picpay.simplificado.service;
 
 import com.picpay.simplificado.dto.*;
+import com.picpay.simplificado.exception.ResourceNotFoundException;
 import com.picpay.simplificado.model.TransactionModel;
 import com.picpay.simplificado.model.UserModel;
 import com.picpay.simplificado.model.enums.BalanceType;
@@ -95,22 +96,22 @@ public class TransactionService {
     }
 
     public TransactionModel rollbackTransfer(Long idSender, Long idReceive, Long idTransaction) {
-        Optional<UserModel> userSend = haveBalance(0.00, idSender);
-        Optional<UserModel> userReceive = haveBalance(0.00, idReceive);
+        UserModel userSend = haveBalance(0.00, idSender).orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
+        UserModel userReceive = haveBalance(0.00, idReceive).orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
 
         TransactionModel transactionModel = transactionRepository.findById(idTransaction).get();
 
-        if (userSend.isPresent() && userReceive.isPresent() && transactionModel.getTransactionType().equals(TransactionType.SUCCESS)) {
-            userReceive.get().getWallet().rollBackBalance(transactionModel.getValue());
-            userSend.get().getWallet().changeBalance(transactionModel.getValue());
+        if (transactionModel.getTransactionType().equals(TransactionType.SUCCESS)) {
+            userReceive.getWallet().rollBackBalance(transactionModel.getValue());
+            userSend.getWallet().changeBalance(transactionModel.getValue());
 
-            repository.saveAll(List.of(userReceive.orElseThrow(), userSend.orElseThrow()));
+            repository.saveAll(List.of(userReceive, userSend));
         }
 
 
         transactionModel.setTransactionType(TransactionType.ROLLBACK);
         transactionRepository.save(transactionModel);
-        validWallet(userSend.get(), userReceive.get(), false);
+        validWallet(userSend, userReceive, false);
 
         return transactionModel;
     }
@@ -146,8 +147,8 @@ public class TransactionService {
     }
 
     public List<TransactionModel> lastTransactions(Long idSender, Long idReceive, Double value) {
-        UserModel userModelSend = haveBalance(0.00, idSender).get();
-        UserModel userModelReceive = haveBalance(0.00, idReceive).get();
+        UserModel userModelSend = haveBalance(0.00, idSender).orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
+        UserModel userModelReceive = haveBalance(0.00, idReceive).orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
 
         return transactionRepository
                 .findByIdSenderAndIdReceiveAndValue(userModelSend.getId(), userModelReceive.getId(), value);
