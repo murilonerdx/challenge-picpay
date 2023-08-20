@@ -1,0 +1,41 @@
+spring:
+  jpa:
+    properties:
+      javax.persistence.schema-generation.create-source: metadata
+      javax.persistence.schema-generation.scripts.action: create
+      javax.persistence.schema-generation.scripts.create-target: create.sql
+      hibernate.hbm2ddl.delimiter: ";"
+    hibernate:
+      ddl-auto: update
+      jdbc.lob.non_contextual_creation: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/desafio-picpay
+    username: postgres
+    password: "#"
+
+mail:
+  host: smtp.mailtrap.io
+  port: 2525
+  username: "#"  # Substitua pelo nome de usuário real
+  password: "#"  # Substitua pela senha real
+  protocol: smtp
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    hibernate:
+      format_sql: false
+
+h2:
+  console:
+    enabled: true
+
+murilonerdx:
+  openapi:
+    dev-url: http://localhost:8080
